@@ -2,73 +2,65 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Student Attendance</title>
 <style>
-body{font-family:Arial;background:#f0fdf4;padding:25px}
-main{max-width:650px;margin:auto;background:white;padding:30px;border-radius:16px}
-input[type=text]{width:65%;padding:12px;box-sizing:border-box;border:1px solid #86efac;border-radius:8px}
-button{background:#15803d;color:white;padding:12px;border:0;border-radius:7px;cursor:pointer}
-.student{display:flex;align-items:center;gap:10px;background:#dcfce7;padding:15px;margin-top:10px;border-radius:8px}
-.student span{flex:1;overflow-wrap:anywhere}
-select{padding:8px}
+body{font-family:Arial;background:#eff6ff;padding:25px}
+main{max-width:600px;margin:auto;background:white;padding:25px;border-radius:15px}
+input{padding:12px;width:70%;border:1px solid #93c5fd;border-radius:7px}
+button{padding:11px;background:#2563eb;color:white;border:0;border-radius:7px;cursor:pointer}
+.student{display:flex;justify-content:space-between;align-items:center;background:#dbeafe;padding:12px;margin:8px 0;border-radius:8px;gap:8px}
+.summary{background:#eff6ff;padding:15px;margin-top:15px;border-radius:8px}
 </style>
 </head>
 <body>
 <main>
 <h1>Student Attendance</h1>
-<p>Manage your classroom attendance easily.</p>
-<input id="name" type="text" placeholder="Student name">
-<button onclick="addStudent()">Add Student</button>
-<h3 id="summary"></h3>
+<input id="name" placeholder="Student name">
+<button onclick="addStudent()">Add</button>
 <div id="students"></div>
+<div class="summary" id="summary"></div>
 </main>
 <script>
-let students=JSON.parse(localStorage.getItem("students")||"[]");
+let students=JSON.parse(localStorage.getItem("attendanceStudents")||"[]");
 function save(){
- localStorage.setItem("students",JSON.stringify(students));
+ localStorage.setItem("attendanceStudents",JSON.stringify(students));
  render();
 }
 function addStudent(){
- const name=document.getElementById("name");
- if(!name.value.trim())return;
- students.push({name:name.value.trim(),status:"Pending"});
- name.value="";
+ const field=document.getElementById("name");
+ const name=field.value.trim();
+ if(!name)return;
+ if(students.some(s=>s.name.toLowerCase()===name.toLowerCase())){
+  alert("This student already exists.");
+  return;
+ }
+ students.push({name,present:false});
+ field.value="";
  save();
 }
 function render(){
  const list=document.getElementById("students");
  list.innerHTML="";
- students.forEach((student,i)=>{
+ students.forEach((s,i)=>{
   const row=document.createElement("div");
   row.className="student";
-  const name=document.createElement("span");
-  name.textContent=student.name;
-  const select=document.createElement("select");
-  ["Pending","Present","Absent"].forEach(status=>{
-   const option=document.createElement("option");
-   option.value=status;
-   option.textContent=status;
-   select.appendChild(option);
-  });
-  select.value=student.status;
-  select.onchange=()=>{
-   students[i].status=select.value;
-   save();
-  };
-  const btn=document.createElement("button");
-  btn.textContent="Delete";
-  btn.onclick=()=>{
-   students.splice(i,1);
-   save();
-  };
-  row.append(name,select,btn);
+  const label=document.createElement("span");
+  label.textContent=s.name;
+  const toggle=document.createElement("button");
+  toggle.textContent=s.present?"Present":"Absent";
+  toggle.style.background=s.present?"#16a34a":"#64748b";
+  toggle.onclick=()=>{students[i].present=!students[i].present;save();};
+  const del=document.createElement("button");
+  del.textContent="X";
+  del.onclick=()=>{students.splice(i,1);save();};
+  row.append(label,toggle,del);
   list.appendChild(row);
  });
- const present=students.filter(s=>s.status==="Present").length;
- const absent=students.filter(s=>s.status==="Absent").length;
+ const present=students.filter(s=>s.present).length;
  document.getElementById("summary").textContent=
- "Total: "+students.length+" | Present: "+present+" | Absent: "+absent;
+ "Total: "+students.length+" | Present: "+present+
+ " | Absent: "+(students.length-present);
 }
 render();
 </script>
